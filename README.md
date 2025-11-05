@@ -35,3 +35,6 @@ assert not {'main_gp_sql_script.sql': ["query: \n            SELECT ns.nspname\n
                         executed_sql = script_step_map.get(step['step_index_num'])
                         if executed_sql and executed_sql not in successful_sql_executed:
                             successful_sql_executed.append(executed_sql)
+
+Хочу перейти в направление, где смогу больше заниматься написанием кода и развитием технических навыков. В результате ротации хочу получать больше практического опыта в разработке — писать, тестировать и улучшать программные решения.
+Хочу глубже разобраться в архитектуре приложений, инструментах разработки и в целом стать сильнее как специалист в области программирования.
