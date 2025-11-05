@@ -19,3 +19,5 @@ assert not {'main_gp_sql_script.sql': ["query: \n            SELECT ns.nspname\n
 Коллеги, привет!
 При выполнении integration_tests падает  ошибкой, в файле на который ссылается не предусмотрена операция update.
 Помогите пожалуйста разобраться в чём может быть проблема.
+
+[main_gp_sql_script.sql, check_rules.sql, post_deploy.sql]
