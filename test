@@ -1,5 +1,80 @@
-        excluded = {'check_rules.sql', 'post_deploy.sql'}
-        script_names = [
-            s for s in (script_names if isinstance(script_names, list) else [script_names])
-            if isinstance(s, str) and s.strip() and s.strip().lower() not in excluded
-        ]
+@pytest.mark.integration
+@allure.id("3620186")
+@allure.feature('Конфиг и сценарий')
+@allure.story('Качество данных')
+@allure.label('layer', 'System')
+@allure.tag('Dynamic')
+@allure.label('title', '0 строк обновлено/удалено/вставлено при выполнении скриптов')
+@allure.description('Проверяет, что в последнем логе скрипта инструкциями create/insert/update/delete '
+                    'обновилась по крайней мере одна запись')
+def test_no_updates_in_chimera_scrips(script_names, package, chimera_api):
+    with allure.step('Получение логов деплоя на тест (от последнего к первому).'):
+        script_names = script_names if isinstance(script_names, list) else [script_names]
+        phrase_to_search = "number of affected rows: 0"
+        phrase_of_success_step = 'Step "execute_sql" succeeded'
+        step_log_url = 'https://chimera.tcsbank.ru/pipelineLog/{0}/{1}/true'
+
+        pipelines = chimera_api.get_package_pipelines(package.name, location='test',  pipeline_type='deploy-test')
+
+        successful_sql_executed = []
+        script_problems = dict()
+
+    with allure.step(f"В логе скриптов ищем \"{phrase_to_search}\"."):
+        for pipe in pipelines['items'][::-1]:
+            pipe_id = pipe['pipeline_id']
+            index_steps = pipe['current_step']['index_num']
+            pipe_log = []
+            for i in range(index_steps):
+                pipe_log = pipe_log + chimera_api.get_pipeline_log(pipe_id, num=str(i + 1))
+
+            with allure.step(f'Лог деплоя (id: {pipe_id}) от {pipe["created_at"]}.'):
+                script_step_map = dict()
+                script_problems = dict()
+                scripts = list(map(str, script_names))
+                max_script_ind = -1
+                for ind, step in enumerate(pipe_log):
+                    if not scripts and step['step_index_num'] > max_script_ind:
+                        break
+
+                    for script in scripts:
+                        if script not in script_step_map and script in step['message']:
+                            with allure.step(f'--- {script} ---\n'
+                                             f'{step_log_url.format(pipe_id, step["step_index_num"])}'):
+                                script_step_map[step['step_index_num']] = script
+                                max_script_ind = max(max_script_ind, step['step_index_num'])
+                                scripts.remove(script)
+                                break
+
+                    if step['message'] == phrase_to_search:
+                        # guard against first-entry case
+                        if ind == 0:
+                            continue
+                        problem_step = pipe_log[ind - 1]
+                        problem_statement = problem_step['message']
+
+                        # Minimal filter: skip benign "0 affected rows" produced by system SELECTs like:
+                        # query:
+                        #             SELECT ns.nspname
+                        # These records are valid and should not be treated as problem; detect by checking that
+                        # the previous message starts with "query:" and contains "select ns.nspname"
+                        ps = (problem_statement or '').strip()
+                        ps_low = ps.lower()
+                        if ps_low.startswith('query:') and 'select ns.nspname' in ps_low:
+                            # skip this benign case
+                            continue
+
+                        problem_script = script_step_map.get(problem_step['step_index_num'])
+                        if problem_script:
+                            if problem_statement not in script_problems.setdefault(problem_script, []):
+                                with allure.step(problem_statement):
+                                    script_problems[problem_script].append(problem_statement)
+
+                    elif step['message'].startswith(phrase_of_success_step):
+                        executed_sql = script_step_map.get(step['step_index_num'])
+                        if executed_sql and executed_sql not in successful_sql_executed:
+                            successful_sql_executed.append(executed_sql)
+
+            if len(scripts) == len(successful_sql_executed):
+                break
+
+        assert not script_problems, "SQL-запросы без обновлений указаны в шагах теста."
