@@ -1,1 +1,2 @@
 drop_column_regexp = r'(?i)ALTER\s+TABLE\s+([<>_]*\w+\.\w+)\s+DROP\s+COLUMN\s+(IF\s+EXISTS\s+)?(\w+)\s*(CASCADE)?'
+drop_column_regexp = r'(?i)ALTER\s+TABLE\s+([<>_]*\w+\.\w+)\s+DROP\s+COLUMN\s+(?:IF\s+EXISTS\s+)?(\w+)\s*(CASCADE)?'
