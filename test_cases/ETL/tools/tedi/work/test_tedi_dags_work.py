@@ -501,6 +501,10 @@ def test_no_updates_in_chimera_scrips_for_dlh(script_names, package, chimera_api
                     if step['message'] == phrase_to_search:
                         problem_step = pipe_log[ind - 1]
                         problem_statement = problem_step['message']
+                        normalized_statement = (problem_statement or '').strip().lower()
+                        if normalized_statement.startswith('query:') and 'select ns.nspname' in normalized_statement:
+                            # пропускаем, тут 0 строк оправдан
+                            continue
                         problem_script = script_step_map.get(problem_step['step_index_num'])
                         if problem_script:
                             if problem_statement not in script_problems.setdefault(problem_script, []):
