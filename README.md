@@ -1,17 +1,13 @@
-test_increment_size_for_dags
 
-Проблема/Цель
-В случае переименования таблицы ее бэкап ищется по маске с новым именем:
+test_ddl_coincide_with_wiki_for_dags
 
-buffer_schema = GP_integration.executeAndReturnLists(
-    """
-    select max(schemaname) from pg_tables 
-    where tablename = '{0}'
-    and schemaname like 'b%';
-    """.format(table_name)
-) 
 Описание
-Необходимо бэкап получать по имени таблицы ДО переименования
+Падает тест test_ddl_coincide_with_wiki_for_dags из-за того, что у названия поля на вики в конце был добавлен пробел.
 
-DoD
-Бэкап таблицы корректно определяется в случае переименования таблицы
+Надо проверить где у нас отсутствует вызов strip()
+
+Пример
+https://time.tbank.ru/tinkoff/pl/7hz88i6g4bry9mneunjii9n7wa
+
+Сценарий воспроизведения
+// Описать при каких обстоятельствах дефект может возникать
