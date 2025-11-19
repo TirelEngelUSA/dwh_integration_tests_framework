@@ -1,1 +1,8 @@
-lt.append([cell.strip() for cell in row])
+old_phys = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
+    # поведение:
+    # - если таблица не переименовывалась -> вернёт vial_name
+    # - если переименовывалась -> вернёт старое phys-имя с тем же префиксом
+    # - если объект не найден -> вернёт None
+
+    # 2) (альтернатива) если нужно старое мета-имя (без префикса)
+    old_meta = package.get_table_name_before_renaming(vial_table_name)  # передаём текущее мета-имя
