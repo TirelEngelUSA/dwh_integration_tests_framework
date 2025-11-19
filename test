@@ -1,4 +1,13 @@
-old_phys = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
+def test_increment_size_for_dags(vial_prefix, live_prefix, tedi_dag, tedi_gp_target, GP_integration,
+                                 contour_short_name, package) -> None:
+    # ... ваш существующий код ...
+
+    # получаем текущий vial_имя в формате schema.table
+    vial_schema, vial_table_name = set_prefix_in_schema(vial_prefix, tedi_gp_target)
+    vial_name = f'{vial_schema}.{vial_table_name}'
+
+    # 1) получить старое физическое имя (с тем же префиксом, что и vial_name)
+    old_phys = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
     # поведение:
     # - если таблица не переименовывалась -> вернёт vial_name
     # - если переименовывалась -> вернёт старое phys-имя с тем же префиксом
@@ -6,3 +15,11 @@ old_phys = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefi
 
     # 2) (альтернатива) если нужно старое мета-имя (без префикса)
     old_meta = package.get_table_name_before_renaming(vial_table_name)  # передаём текущее мета-имя
+
+    # пример проверки
+    if old_phys is None:
+        pytest.skip(f'Не удалось определить старое имя для {vial_name}')
+    else:
+        allure.attach(str(old_phys), name='Old phys name', attachment_type=allure.attachment_type.TEXT)
+
+    # ... остальной код теста ...
