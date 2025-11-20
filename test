@@ -23,3 +23,26 @@ def test_increment_size_for_dags(vial_prefix, live_prefix, tedi_dag, tedi_gp_tar
         allure.attach(str(old_phys), name='Old phys name', attachment_type=allure.attachment_type.TEXT)
 
     # ... остальной код теста ...
+
+
+@pytest.fixture
+def package_dag(request, tedi_dag: str, package_dag_factory, package) -> TediDag:
+    def package_dag_teardown():
+        pass
+    request.addfinalizer(package_dag_teardown)
+
+    # создаём объект TediDag через фабрику
+    dag = package_dag_factory(tedi_dag)
+
+    # пробуем получить старое имя дага из пакета (если оно есть)
+    try:
+        old_name = package.get_dag_name_before_renaming(tedi_dag)
+    except Exception:
+        old_name = None
+
+    # сохраняем подсказку о старом имени прямо в объекте TediDag,
+    # чтобы можно было посмотреть, как фикстура его заполняет
+    # (позже можно будет передавать это значение в конструктор TediDag)
+    setattr(dag, 'old_name_hint', old_name)
+
+    return dag
