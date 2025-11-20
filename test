@@ -46,3 +46,10 @@ def package_dag(request, tedi_dag: str, package_dag_factory, package) -> TediDag
     setattr(dag, 'old_name_hint', old_name)
 
     return dag
+
+
+def test_some(vial_prefix, package_dag, package):
+    # package_dag — это TediDag, дополненный атрибутом old_name_hint
+    old = getattr(package_dag, 'old_name_hint', None)
+    print('old_name_hint =', old)
+    # или assert/attach в allure
