@@ -56,3 +56,13 @@ def test_some(vial_prefix, package_dag, package):
 
 
 old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
+
+
+        old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
+
+        ids: List[str] = []
+        params: List[Tuple[str, str]] = []
+        for dag in dags:
+            # use old name if it exists and differs from current
+            old = old_dag_names.get(dag)
+            dag_to_use = old if (old and old != dag) else dag
