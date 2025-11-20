@@ -22,3 +22,5 @@ tedi_dag_factory на пакете настраивает фабрику TediDag
 Затем для каждого найденного target формируется кортеж (tech_dag.name, target) и добавляется в params, а для идентификаторов создаётся строка f'{tech_dag}, {target}' и добавляется в ids.
 В конце params и ids передаются в __collect_local_params.
 Как сохраняются параметры локально (Params)
+
+{'dv_load_s_payment_request_mai': 'dv_load_s_payment_request_mai', 'smemart_load_party_x_operator': 'smemart_load_mdm_party_x_operator'}
