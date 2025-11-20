@@ -58,11 +58,26 @@ def test_some(vial_prefix, package_dag, package):
 old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
 
 
-        old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
+    def _param_tedi_dag_and_target(self, filter: Optional[str] = None):
 
+        fltr = filter if filter else 'Dag{!o}'
+        dags = [dag.Name for dag in self.package_analyzer.getMetaObjects(fltr)]
+        old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
+        
         ids: List[str] = []
         params: List[Tuple[str, str]] = []
         for dag in dags:
-            # use old name if it exists and differs from current
             old = old_dag_names.get(dag)
             dag_to_use = old if (old and old != dag) else dag
+            tech_dag = self.package_analyzer.tedi_dag_factory(dag_to_use, branch=self.package_analyzer.name)
+            list_of_targets = []
+            try:
+                list_of_targets = tech_dag.get_target_tables()
+            except Exception as e:
+                pass
+
+            for target in list_of_targets:
+                params.append((tech_dag.name, target))
+                ids.append(f'{tech_dag}, {target}')
+
+        self.__collect_local_params(params, ids, 'tedi_dag, tedi_gp_target')
