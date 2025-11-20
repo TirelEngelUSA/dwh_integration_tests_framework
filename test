@@ -53,3 +53,6 @@ def test_some(vial_prefix, package_dag, package):
     old = getattr(package_dag, 'old_name_hint', None)
     print('old_name_hint =', old)
     # или assert/attach в allure
+
+
+old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
