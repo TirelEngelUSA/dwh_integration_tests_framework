@@ -1,26 +1,13 @@
 
-test_ddl_coincide_with_wiki_for_dags
+test_compare_loader_params_with_prod
+
+def test_compare_loader_params_with_prod
+
+Проблема/Цель
+В случае, если две или более таблиц имеют одинаковое имя, то времянка формируется по принципу <имя_таблицы>_XXX. Это имя отражается в логах. Как результат при попытке распарсить лог получаем имя несуществующей таблицы.
 
 Описание
-Падает тест test_ddl_coincide_with_wiki_for_dags из-за того, что у названия поля на вики в конце был добавлен пробел.
+Необходимо поменять принцип формирования тыблицы, что подрезается. Например, по ключам sourse_name, sourse_schema в логах
 
-Надо проверить где у нас отсутствует вызов strip()
-
-Пример
-https://time.tbank.ru/tinkoff/pl/7hz88i6g4bry9mneunjii9n7wa
-
-Сценарий воспроизведения
-// Описать при каких обстоятельствах дефект может возникать
-
-Разъяснение шагов:
-
-fltr = filter if filter else 'Dag{!o}' — используется фильтр, который передал вызывающий (в нашем случае 'Dag{!n,s}').
-dags = [dag.Name for dag in self.package_analyzer.getMetaObjects(fltr)] — запрашиваются мета-объекты (DAg) из пакета через package_analyzer.getMetaObjects(fltr). Это и есть этап «взять список дагов из пакета по фильтру». (Функция getMetaObjects реализована в модели пакета и принимает такие фильтры типа 'Dag{!n,s}' — см. реализацию Package.getMetaObjects / BasePackage.getMetaObjects.)
-Для каждого имени дага создаётся экземпляр TediDag через package_analyzer.tedi_dag_factory(dag, branch=...).
-tedi_dag_factory на пакете настраивает фабрику TediDag (см. SASpackage.tedi_dag_factory в PackageModels).
-Для каждого созданного tech_dag вызывается tech_dag.get_target_tables() — метод TediDag, возвращающий список GP-таргетов дага.
-Затем для каждого найденного target формируется кортеж (tech_dag.name, target) и добавляется в params, а для идентификаторов создаётся строка f'{tech_dag}, {target}' и добавляется в ids.
-В конце params и ids передаются в __collect_local_params.
-Как сохраняются параметры локально (Params)
-
-{'dv_load_s_payment_request_mai': 'dv_load_s_payment_request_mai', 'smemart_load_party_x_operator': 'smemart_load_mdm_party_x_operator'}
+DoD
+Если таблицы имеют одинаоквые имена, то их имена все равно верно определяются.
