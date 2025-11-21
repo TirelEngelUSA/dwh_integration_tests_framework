@@ -1,83 +1,82 @@
-def test_increment_size_for_dags(vial_prefix, live_prefix, tedi_dag, tedi_gp_target, GP_integration,
-                                 contour_short_name, package) -> None:
-    # ... ваш существующий код ...
+@allure.id('2501446')
+@pytest.mark.integration
+@allure.feature('Tables')
+@allure.story('Обсолет')
+@allure.label('layer', 'system')
+@allure.tag('Dynamic')
+@allure.label('title', 'Корректность перевода таблицы в обсолет')
+@allure.description('Проверяем что не осталось дагов, зависящих от переводимой в обсолет таблицы')
+def test_obsol_dag_tables(package_dag_by_repo, package, vial_prefix, mg_replica_helper, sas_script_parser) -> None:
+    with allure.step('Получаем список дагов(s) из конфига'):
+        current_dags = {dag.Name for dag in package.getMetaObjects('Dag{}')}
+        renamed_objects = {package._get_obj_name_before_renaming(dag, 'Dag') for dag in current_dags}
+        config_dags = current_dags | renamed_objects
 
-    # получаем текущий vial_имя в формате schema.table
-    vial_schema, vial_table_name = set_prefix_in_schema(vial_prefix, tedi_gp_target)
-    vial_name = f'{vial_schema}.{vial_table_name}'
+        dags_to_print = '\n'.join(config_dags)
+        with allure.step(dags_to_print):
+            pass
+    with allure.step('Определяем obsolete_tables из мета-объектов пакета (все Obsolete + переименованные)'):
+        # Инициализация множества кандидатов (берём все, не только первый)
+        candidate_tables = set()
 
-    # 1) получить старое физическое имя (с тем же префиксом, что и vial_name)
-    old_phys = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
-    # поведение:
-    # - если таблица не переименовывалась -> вернёт vial_name
-    # - если переименовывалась -> вернёт старое phys-имя с тем же префиксом
-    # - если объект не найден -> вернёт None
+        # 1) Все явные Obsolete в пакете (включаем все)
+        obsolete_meta = {table.Name.replace('<>_', 'prod_').lower() for table in package.getMetaObjects('GpTable{o}')}
+        if obsolete_meta:
+            candidate_tables.update(obsolete_meta)
 
-    # 2) (альтернатива) если нужно старое мета-имя (без префикса)
-    old_meta = package.get_table_name_before_renaming(vial_table_name)  # передаём текущее мета-имя
-
-    # пример проверки
-    if old_phys is None:
-        pytest.skip(f'Не удалось определить старое имя для {vial_name}')
-    else:
-        allure.attach(str(old_phys), name='Old phys name', attachment_type=allure.attachment_type.TEXT)
-
-    # ... остальной код теста ...
-
-
-@pytest.fixture
-def package_dag(request, tedi_dag: str, package_dag_factory, package) -> TediDag:
-    def package_dag_teardown():
-        pass
-    request.addfinalizer(package_dag_teardown)
-
-    # создаём объект TediDag через фабрику
-    dag = package_dag_factory(tedi_dag)
-
-    # пробуем получить старое имя дага из пакета (если оно есть)
-    try:
-        old_name = package.get_dag_name_before_renaming(tedi_dag)
-    except Exception:
-        old_name = None
-
-    # сохраняем подсказку о старом имени прямо в объекте TediDag,
-    # чтобы можно было посмотреть, как фикстура его заполняет
-    # (позже можно будет передавать это значение в конструктор TediDag)
-    setattr(dag, 'old_name_hint', old_name)
-
-    return dag
-
-
-def test_some(vial_prefix, package_dag, package):
-    # package_dag — это TediDag, дополненный атрибутом old_name_hint
-    old = getattr(package_dag, 'old_name_hint', None)
-    print('old_name_hint =', old)
-    # или assert/attach в allure
-
-
-old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
-
-
-    def _param_tedi_dag_and_target(self, filter: Optional[str] = None):
-
-        fltr = filter if filter else 'Dag{!o}'
-        dags = [dag.Name for dag in self.package_analyzer.getMetaObjects(fltr)]
-        old_dag_names = {d: self.package_analyzer.get_dag_name_before_renaming(d) for d in dags}
-        
-        ids: List[str] = []
-        params: List[Tuple[str, str]] = []
-        for dag in dags:
-            old = old_dag_names.get(dag)
-            dag_to_use = old if (old and old != dag) else dag
-            tech_dag = self.package_analyzer.tedi_dag_factory(dag_to_use, branch=self.package_analyzer.name)
-            list_of_targets = []
+        # 2) Дополняем таблицами, у которых есть имя до переименования (добавляем и текущее, и предыдущее)
+        renamed_meta = set()
+        for table in package.getMetaObjects('GpTable{}'):
             try:
-                list_of_targets = tech_dag.get_target_tables()
-            except Exception as e:
-                pass
+                prev_name = package._get_obj_name_before_renaming(table.Name, 'GpTable')
+            except Exception:
+                prev_name = None
+            if prev_name and prev_name != table.Name:
+                renamed_meta.add(table.Name.replace('<>_', 'prod_').lower())
+                renamed_meta.add(prev_name.replace('<>_', 'prod_').lower())
 
-            for target in list_of_targets:
-                params.append((tech_dag.name, target))
-                ids.append(f'{tech_dag}, {target}')
+        if renamed_meta:
+            candidate_tables.update(renamed_meta)
 
-        self.__collect_local_params(params, ids, 'tedi_dag, tedi_gp_target')
+        # 3) Fallback через таргет дага — закомментирован по просьбе (минимальное изменение)
+        # if not candidate_tables:
+        #     target_tables = package_dag_by_repo.get_target_tables()
+        #     if not target_tables:
+        #         for transform in package_dag_by_repo.transforms:
+        #             if transform.get('type') == TediGpTransforms.gp_view.value:
+        #                 target_tables.extend(list(transform.get('params', {}).get('entity_target', {}).values()))
+        #     if target_tables:
+        #         candidate_tables.add(target_tables[0].replace('test_', 'prod_').replace('<>_', 'prod_').lower())
+
+    with allure.step('Получаем urn таблицы в DataDetective'):
+        result = mg_replica_helper.get_urn_of_object(obsolete_table)
+        assert result, 'Таблица не найдена в DataDetective. Необходимо проверить зависимости вручную.'
+
+        urn, phys_table = result[0]
+        url = f'https://dd.tcsbank.ru/{urn}'
+        allure.dynamic.link(url, name=f'Link to DataDetective: {phys_table}')
+
+        with allure.step(urn):
+            pass
+
+    with allure.step('Ищем в DataDetective зависимые от таблицы даги'):
+        dep_dags = {obj[0] for obj in mg_replica_helper.get_depend_etl_objects_by_urn(urn) if obj[1] == 'DAG'}
+
+        dags_to_print = '\n'.join(sorted(dep_dags))
+        with allure.step(dags_to_print):
+            pass
+
+    if dep_dags:
+        with allure.step('Проверяем, что зависимые даги есть в конфиге'):
+            depend_not_in_config = dep_dags - config_dags
+
+            assert not depend_not_in_config, f'От таблицы {obsolete_table} зависят объекты, ' \
+                                             f'которых нет в конфиге: {depend_not_in_config}. ' \
+                                             f'Необходимо проверить, что все зависимости учтены.'
+
+    with allure.step('Проверяем, что таблица переводится в обсолет'):
+        obsolete_tables_from_package = {table.Name.replace('<>_', 'prod_') for table
+                                        in package.getMetaObjects('GpTable{o}')}
+        assert obsolete_table in obsolete_tables_from_package, f'В пакете не найдена таблица {obsolete_table} ' \
+                                                               f'с флагом Obsolete. ' \
+                                                               f'Проверьте перевод таблицы в обсолет вручную.'
