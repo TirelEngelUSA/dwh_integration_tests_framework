@@ -1,1 +1,8 @@
     old_table = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
+
+
+	vial_schema, vial_table_name = set_prefix_in_schema(vial_prefix, tedi_gp_target) 'ddpqa23601_smemart' 'party_x_operator'
+    live_schema, live_table_name = set_prefix_in_schema(live_prefix, tedi_gp_target) 'rdpqa23601_smemart' 'party_x_operator'
+    vial_name = f'{vial_schema}.{vial_table_name}' 'ddpqa23601_smemart.party_x_operator'
+    live_name = f'{live_schema}.{live_table_name}' 'rdpqa23601_smemart.party_x_operator'
+    old_table = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix) 'ddpqa23601_smemart.mdm_party_x_operator'
