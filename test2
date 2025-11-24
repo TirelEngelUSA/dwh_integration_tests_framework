@@ -1,1 +1,1 @@
-old_meta = package.get_table_name_before_renaming(tedi_gp_target)
+    old_table = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
