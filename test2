@@ -1,0 +1,1 @@
+old_meta = package.get_table_name_before_renaming(tedi_gp_target)
