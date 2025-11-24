@@ -6,3 +6,15 @@
     vial_name = f'{vial_schema}.{vial_table_name}' 'ddpqa23601_smemart.party_x_operator'
     live_name = f'{live_schema}.{live_table_name}' 'rdpqa23601_smemart.party_x_operator'
     old_table = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix) 'ddpqa23601_smemart.mdm_party_x_operator'
+
+
+    old_table_vial = package.get_name_of_table_before_renaming(vial_name, 'GpTable', prefix=vial_prefix)
+    old_table_live = package.get_name_of_table_before_renaming(live_name, 'GpTable', prefix=live_prefix)
+
+    # если старое имя есть и отличается — используем его как физическое имя и обновляем schema/table части
+    if old_table_vial and old_table_vial != vial_name:
+        vial_name = old_table_vial
+        vial_schema, vial_table_name = old_table_vial.split('.', 1)
+
+    if old_table_live and old_table_live != live_name:
+        live_name = old_table_live
