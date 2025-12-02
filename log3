@@ -74,10 +74,11 @@ autotest_cut 60%
 Проводил актуализацию, рефакторинг и расширение тестов в autoreview_etl и dwh_integration_tests_framework.
 
 Правка тестов:
-https://jira.tcsbank.ru/browse/DPQA-2754
-https://jira.tcsbank.ru/browse/DPQA-2704
-https://jira.tcsbank.ru/browse/DPQA-2986
-https://jira.tcsbank.ru/browse/DPQA-3192
+https://jira.tcsbank.ru/browse/DPQA-2754 Нужно актуализировать тест согласно стандарту
+https://jira.tcsbank.ru/browse/DPQA-2704 Необходимо изменить drop_column_regexp в классе ChimeraSqlScriptParser (именно в этом классе, т.к. речь идет про скрипты в Химере!) чтобы не зависимо от наличии или отсутствии конструкции  if exists регулярка всегда находила ключевое слово cascade 
+https://jira.tcsbank.ru/browse/DPQA-2986 Необходимо проанализировать каким образом можно учитывать только логи, относящие к шагам execute_sql (вероятно логи остальных шагов не нужно парсить, но этот момент тоже лучше обдумать дополнительно).
+Если подобная фильтрация возможна, то реализовтаь ее. 
+https://jira.tcsbank.ru/browse/DPQA-3192 Необходимо при формировании списка дагов пропускать даги, которые в своем имени не содержат LOAD/BIND
 
 Юниты:
 https://jira.tcsbank.ru/browse/DPQA-3123
